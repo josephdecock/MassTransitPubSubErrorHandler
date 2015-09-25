@@ -36,9 +36,16 @@
 
         class SomethingHappenedConsumer : IConsumer<ISomethingHappened>
         {
+            static Random rand = new Random();
+
             public Task Consume(ConsumeContext<ISomethingHappened> context)
             {
-                throw new Exception("This is a contrived exception for example purposes");
+                if (rand.Next(2) > 0)
+                {
+                    throw new Exception("This is a contrived exception for example purposes");
+                }
+                Console.WriteLine("Successfully consumed a message");
+                return Task.FromResult(0);
             }
         }
     }
