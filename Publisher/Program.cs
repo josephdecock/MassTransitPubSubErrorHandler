@@ -1,9 +1,7 @@
-﻿namespace Client
+﻿namespace Publisher
 {
     using System;
     using System.Configuration;
-    using System.IO;
-    using System.Text;
     using System.Threading.Tasks;
     using MassTransit;
     using Messages;
@@ -19,17 +17,17 @@
             {
                 for (;;)
                 {
-                    Console.Write("Quit exits, anything else sends a message: ");
-                    string theHappening = Console.ReadLine();
-                    if (theHappening == "quit")
-                        break;
-
                     // this is run as a Task to avoid weird console application issues
                     Task.Run(async () =>
                     {
                         busControl.Publish<ISomethingHappened>(new SomethingHappened());
                         Console.WriteLine("Publishing a message");
                     }).Wait();
+
+                    Console.Write("Quit exits, anything else sends a message: ");
+                    string theHappening = Console.ReadLine();
+                    if (theHappening == "quit")
+                        break;
                 }
             }
             catch (Exception ex)

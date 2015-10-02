@@ -1,4 +1,4 @@
-﻿namespace Client
+﻿namespace Subscriber
 {
     using System;
     using System.Configuration;
@@ -22,30 +22,38 @@
 
         static IBusControl CreateBus()
         {
-            return Bus.Factory.CreateUsingRabbitMq(bus =>
+            var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
             {
-                var host = bus.Host(new Uri(ConfigurationManager.AppSettings["RabbitMQHost"]), h => { });
+                var host = cfg.Host(new Uri(ConfigurationManager.AppSettings["RabbitMQHost"]), h => { });
 
-                bus.ReceiveEndpoint(host, "Subscriber", ep =>
+                cfg.ReceiveEndpoint(host, "Subscriber", e =>
                 {
-                    ep.Consumer<SomethingHappenedConsumer>();
-                    ep.UseRetry(Retry.Interval(1, TimeSpan.FromSeconds(1)));
+                    e.Consumer<SomethingHappenedConsumer>();
+                    e.UseRetry(Retry.Interval(1, TimeSpan.FromSeconds(1)));
                 });
             });
+
+            //The callbacks in this observer get called...
+            bus.ConnectReceiveObserver(new ReceiveObserver());
+
+            //...but not in these two observers
+            bus.ConnectConsumeObserver(new ConsumeObserver());
+            bus.ConnectConsumeMessageObserver(new ConsumeSomethingHappenedObserver());
+
+            return bus;
         }
 
         class SomethingHappenedConsumer : IConsumer<ISomethingHappened>
         {
-            static Random rand = new Random();
+            //static Random rand = new Random();
 
-            public Task Consume(ConsumeContext<ISomethingHappened> context)
+            public async Task Consume(ConsumeContext<ISomethingHappened> context)
             {
-                if (rand.Next(2) > 0)
-                {
-                    throw new Exception("This is a contrived exception for example purposes");
-                }
-                Console.WriteLine("Successfully consumed a message");
-                return Task.FromResult(0);
+                //if (rand.Next(2) > 0)
+                //{
+                //    throw new Exception("This is a contrived exception for example purposes");
+                //}
+                await Console.Out.WriteLineAsync("Successfully consumed a message");
             }
         }
     }
